@@ -99,6 +99,11 @@ public class OpenAiStreamFunctionCallingHelper {
 	}
 
 	private ChatCompletionMessage merge(ChatCompletionMessage previous, ChatCompletionMessage current) {
+		// modified by liufy
+		if (current == null) {
+			return previous;
+		}
+
 		String content = (current.content() != null ? current.content()
 				: "" + ((previous.content() != null) ? previous.content() : ""));
 		String reasoningContent = (current.reasoningContent() != null ? current.reasoningContent()

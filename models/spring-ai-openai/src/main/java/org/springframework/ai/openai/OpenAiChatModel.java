@@ -213,16 +213,19 @@ public class OpenAiChatModel implements ChatModel {
 				}
 
 			// @formatter:off
-				List<Generation> generations = choices.stream().map(choice -> {
-					Map<String, Object> metadata = Map.of(
-							"id", chatCompletion.id() != null ? chatCompletion.id() : "",
-							"role", choice.message().role() != null ? choice.message().role().name() : "",
-							"index", choice.index() != null ? choice.index() : 0,
-							"finishReason", getFinishReasonJson(choice.finishReason()),
-							"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
-							"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(Map.of()));
-					return buildGeneration(choice, metadata, request);
-				}).toList();
+				// modified by liufy 增加filter
+				List<Generation> generations = choices.stream()
+						.filter(choice -> choice.message() != null)
+						.map(choice -> {
+							Map<String, Object> metadata = Map.of(
+									"id", chatCompletion.id() != null ? chatCompletion.id() : "",
+									"role", choice.message().role() != null ? choice.message().role().name() : "",
+									"index", choice.index() != null ? choice.index() : 0,
+									"finishReason", getFinishReasonJson(choice.finishReason()),
+									"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
+									"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(Map.of()));
+							return buildGeneration(choice, metadata, request);
+						}).toList();
 				// @formatter:on
 
 				RateLimit rateLimit = OpenAiResponseHeaderExtractor.extractAiResponseHeaders(completionEntity);
@@ -309,20 +312,24 @@ public class OpenAiChatModel implements ChatModel {
 						// If an id is not provided, set to "NO_ID" (for compatible APIs).
 						String id = chatCompletion2.id() == null ? "NO_ID" : chatCompletion2.id();
 
-						List<Generation> generations = chatCompletion2.choices().stream().map(choice -> { // @formatter:off
-							if (choice.message().role() != null) {
-								roleMap.putIfAbsent(id, choice.message().role().name());
-							}
-							Map<String, Object> metadata = Map.of(
-									"id", id,
-									"role", roleMap.getOrDefault(id, ""),
-									"index", choice.index() != null ? choice.index() : 0,
-									"finishReason", getFinishReasonJson(choice.finishReason()),
-									"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
-									"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(),
-									"reasoningContent", choice.message().reasoningContent() != null ? choice.message().reasoningContent() : "");
-							return buildGeneration(choice, metadata, request);
-						}).toList();
+						// modified by liufy
+						List<Generation> generations = chatCompletion2.choices()
+								.stream()
+								.filter(choice -> choice.message() != null)
+								.map(choice -> { // @formatter:off
+									if (choice.message().role() != null) {
+										roleMap.putIfAbsent(id, choice.message().role().name());
+									}
+									Map<String, Object> metadata = Map.of(
+											"id", id,
+											"role", roleMap.getOrDefault(id, ""),
+											"index", choice.index() != null ? choice.index() : 0,
+											"finishReason", getFinishReasonJson(choice.finishReason()),
+											"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
+											"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(),
+											"reasoningContent", choice.message().reasoningContent() != null ? choice.message().reasoningContent() : "");
+									return buildGeneration(choice, metadata, request);
+								}).toList();
 						// @formatter:on
 						OpenAiApi.Usage usage = chatCompletion2.usage();
 						Usage currentChatResponseUsage = usage != null ? getDefaultUsage(usage) : new EmptyUsage();
