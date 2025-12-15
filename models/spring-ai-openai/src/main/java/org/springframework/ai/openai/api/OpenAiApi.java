@@ -278,7 +278,28 @@ public class OpenAiApi {
 						// modified by liufy
 						.filter(chunk -> chunk != null && !ObjectUtils.isEmpty(chunk.choices))
 						.reduce(new ChatCompletionChunk(null, null, null, null, null, null, null, null),
-								(previous, current) -> this.chunkMerger.merge(previous, current));
+								(previous, current) -> this.chunkMerger.merge(previous, current))
+                        .flatMap(mergedChunk -> {
+                            if (mergedChunk.choices() != null && !mergedChunk.choices().isEmpty()) {
+                                var choice = mergedChunk.choices().get(0);
+
+                                if (choice.finishReason() == ChatCompletionFinishReason.LENGTH
+                                    && choice.delta() != null
+                                    && !CollectionUtils.isEmpty(choice.delta().toolCalls())) {
+
+                                    // 移除无效的最后一个工具调用
+                                    ChatCompletionChunk cleanedChunk =
+                                            this.chunkMerger.removeInvalidLastToolCall(mergedChunk);
+
+                                    if (cleanedChunk == null) {
+                                        return Mono.empty();
+                                    }
+
+                                    return Mono.just(cleanedChunk);
+                                }
+                            }
+                            return Mono.just(mergedChunk);
+                        });
 						return List.of(monoChunk);
 			})
 			// Flux<Mono<ChatCompletionChunk>> -> Flux<ChatCompletionChunk>

@@ -19,6 +19,7 @@ package org.springframework.ai.openai.api;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.openai.api.OpenAiApi.ChatCompletion;
 import org.springframework.ai.openai.api.OpenAiApi.ChatCompletion.Choice;
 import org.springframework.ai.openai.api.OpenAiApi.ChatCompletionChunk;
@@ -225,6 +226,84 @@ public class OpenAiStreamFunctionCallingHelper {
 		return new OpenAiApi.ChatCompletion(chunk.id(), choices, chunk.created(), chunk.model(), chunk.serviceTier(),
 				chunk.systemFingerprint(), "chat.completion", null);
 	}
+
+	public ChatCompletionChunk removeInvalidLastToolCall(ChatCompletionChunk chunk) {
+		if (chunk == null || CollectionUtils.isEmpty(chunk.choices())) {
+			return chunk;
+		}
+
+		var choice = chunk.choices().get(0);
+		if (choice == null || choice.delta() == null
+			|| CollectionUtils.isEmpty(choice.delta().toolCalls())) {
+			return chunk;
+		}
+
+		List<ToolCall> toolCalls = new ArrayList<>(choice.delta().toolCalls());
+		if (toolCalls.isEmpty()) {
+			return chunk;
+		}
+
+		// 检查最后一个工具调用
+		ToolCall lastToolCall = toolCalls.get(toolCalls.size() - 1);
+		if (lastToolCall.function() != null && lastToolCall.function().arguments() != null) {
+			if (!isValidJson(lastToolCall.function().arguments())) {
+				// 移除最后一个无效的工具调用
+				toolCalls.remove(toolCalls.size() - 1);
+
+				if (toolCalls.isEmpty()) {
+					return null; // 返回 null 表示整个 chunk 无效
+				}
+
+				// 构建新的 chunk
+				ChatCompletionMessage newDelta = new ChatCompletionMessage(
+						choice.delta().content(),
+						choice.delta().role(),
+						choice.delta().name(),
+						choice.delta().toolCallId(),
+						toolCalls,
+						choice.delta().refusal(),
+						choice.delta().audioOutput(),
+						choice.delta().annotations(),
+						choice.delta().reasoningContent()
+				);
+
+				ChunkChoice newChoice = new ChunkChoice(
+						ChatCompletionFinishReason.TOOL_CALLS,
+						choice.index(),
+						newDelta,
+						choice.logprobs()
+				);
+
+				return new ChatCompletionChunk(
+						chunk.id(),
+						List.of(newChoice),
+						chunk.created(),
+						chunk.model(),
+						chunk.serviceTier(),
+						chunk.systemFingerprint(),
+						chunk.object(),
+						chunk.usage()
+				);
+			}
+		}
+
+		return chunk;
+	}
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	private boolean isValidJson(String json) {
+		if (json == null || json.trim().isEmpty()) {
+			return false;
+		}
+		try {
+			objectMapper.readTree(json);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 
 }
 // ---
