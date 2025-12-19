@@ -19,15 +19,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.taobao</groupId>
-		<artifactId>parent</artifactId>
-		<version>2.0.0</version>
-		<relativePath/>
+		<groupId>org.springframework.ai</groupId>
+		<artifactId>spring-ai-parent</artifactId>
+		<version>1.1.0-msea</version>
 	</parent>
 
-	<groupId>org.springframework.ai</groupId>
 	<artifactId>spring-ai-bom</artifactId>
-	<version>1.1.0-msea-SNAPSHOT</version>
+	<version>1.1.0-msea</version>
 
     <packaging>pom</packaging>
 
@@ -1377,11 +1375,11 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>${maven-deploy-plugin.version}</version>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-deploy-plugin</artifactId>-->
+<!--				<version>${maven-deploy-plugin.version}</version>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>

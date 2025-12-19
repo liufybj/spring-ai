@@ -20,7 +20,7 @@
 	<parent>
 		<groupId>org.springframework.ai</groupId>
 		<artifactId>spring-ai-parent</artifactId>
-		<version>1.1.0-msea-SNAPSHOT</version>
+		<version>1.1.0-msea</version>
 	</parent>
     <artifactId>spring-ai-docs</artifactId>
     <name>Spring AI Docs</name>
@@ -80,14 +80,6 @@
                     </descriptors>
                     <finalName>spring-ai-${project.version}</finalName>
                     <appendAssemblyId>true</appendAssemblyId>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>${maven-deploy-plugin.version}</version>
-                <configuration>
-                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
