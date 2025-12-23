@@ -205,7 +205,8 @@ public class OpenAiStreamFunctionCallingHelper {
 		}
 
 		var choice = chatCompletion.choices().get(0);
-		if (choice == null || choice.delta() == null) {
+		// modified by liufy 删除delta为null的判断
+		if (choice == null) {
 			return false;
 		}
 		return choice.finishReason() == ChatCompletionFinishReason.TOOL_CALLS;
