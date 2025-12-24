@@ -346,18 +346,18 @@ public class OpenAiApi {
                                     ChatCompletionChunk cleanedChunk = this.chunkMerger.removeInvalidLastToolCall(preChunk.get());
 
                                     if (cleanedChunk == null) {
-                                        return Mono.just(chunk);
+                                        return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
                                     }
 
-                                    return Flux.just(chunk, cleanedChunk);
+                                    return chunk.choices.get(0).delta == null ? Flux.just(cleanedChunk) : Flux.just(chunk, cleanedChunk);
                                 } else {
-                                    return Flux.just(chunk, preChunk.get());
+                                    return chunk.choices.get(0).delta == null ? Flux.just(preChunk.get()) : Flux.just(chunk, preChunk.get());
                                 }
                             } else {
-                                return Mono.just(chunk);
+                                return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
                             }
                         } else {
-                            return Mono.just(chunk);
+                            return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
                         }
                     } else {
                         // 不在工具内部，直接返回 chunk
@@ -868,8 +868,9 @@ public class OpenAiApi {
          * Only for compatibility with Mistral AI API.
          */
         @JsonProperty("tool_call")
-        TOOL_CALL
-
+        TOOL_CALL,
+        @JsonProperty("error_finish")
+        ERROR_FINISH
     }
 
     /**

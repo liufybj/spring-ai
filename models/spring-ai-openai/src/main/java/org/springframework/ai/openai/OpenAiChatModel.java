@@ -619,13 +619,15 @@ public class OpenAiChatModel implements ChatModel {
 			else if (message.getMessageType() == MessageType.TOOL) {
 				ToolResponseMessage toolMessage = (ToolResponseMessage) message;
 
-				toolMessage.getResponses()
-					.forEach(response -> Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id"));
+				// modified by liufy 过滤id为null的
+//				toolMessage.getResponses()
+//					.forEach(response -> Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id"));
 				return toolMessage.getResponses()
-					.stream()
-					.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
-							tr.id(), null, null, null, null, null))
-					.toList();
+						.stream()
+						.filter(response -> response.id() != null)
+						.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
+								tr.id(), null, null, null, null, null))
+						.toList();
 			}
 			else {
 				throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
