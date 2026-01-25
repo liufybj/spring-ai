@@ -286,8 +286,7 @@ public class OpenAiChatModel implements ChatModel {
 				throw new IllegalArgumentException("Audio parameters are not supported for streaming requests.");
 			}
 
-			Flux<OpenAiApi.ChatCompletionChunk> completionChunks = this.openAiApi.chatCompletionStream(request,
-					getAdditionalHttpHeaders(prompt));
+			Flux<OpenAiApi.ChatCompletionChunk> completionChunks = this.openAiApi.chatCompletionStream(request, getAdditionalHttpHeaders(prompt));
 
 			// For chunked responses, only the first chunk contains the choice role.
 			// The rest of the chunks with same ID share the same role.
@@ -586,7 +585,12 @@ public class OpenAiChatModel implements ChatModel {
 				Object content = message.getText();
 				if (message instanceof UserMessage userMessage) {
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						List<MediaContent> contentList = new ArrayList<>(List.of(new MediaContent(message.getText())));
+						List<MediaContent> contentList;
+						if (message.getText() == null || userMessage.getText().equals("")) {
+							contentList = new ArrayList<>();
+						} else {
+							contentList = new ArrayList<>(List.of(new MediaContent(message.getText())));
+						}
 
 						contentList.addAll(userMessage.getMedia().stream().map(this::mapToMediaContent).toList());
 
@@ -658,6 +662,11 @@ public class OpenAiChatModel implements ChatModel {
 
 	private MediaContent mapToMediaContent(Media media) {
 		var mimeType = media.getMimeType();
+		// modified by liufy add text
+		if ("text".equals(mimeType.getType())) {
+			return new MediaContent(media.getData().toString());
+		}
+
 		if (MimeTypeUtils.parseMimeType("audio/mp3").equals(mimeType)) {
 			return new MediaContent(
 					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.MP3));
