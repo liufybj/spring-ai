@@ -21,11 +21,11 @@
 	<parent>
 		<groupId>org.springframework.ai</groupId>
 		<artifactId>spring-ai-parent</artifactId>
-		<version>1.1.2-msea-SNAPSHOT</version>
+		<version>1.1.2</version>
 	</parent>
 
 	<artifactId>spring-ai-bom</artifactId>
-	<version>1.1.2-msea-SNAPSHOT</version>
+	<version>1.1.2</version>
 
     <packaging>pom</packaging>
 
