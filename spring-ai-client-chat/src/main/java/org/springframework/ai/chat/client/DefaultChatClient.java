@@ -96,6 +96,10 @@ public class DefaultChatClient implements ChatClient {
 		this.defaultChatClientRequest = defaultChatClientRequest;
 	}
 
+	public DefaultChatClientRequestSpec getDefaultChatClientRequest() {
+		return defaultChatClientRequest;
+	}
+
 	@Override
 	public ChatClientRequestSpec prompt() {
 		return new DefaultChatClientRequestSpec(this.defaultChatClientRequest);

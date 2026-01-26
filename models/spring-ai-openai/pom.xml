@@ -37,7 +37,11 @@
 	</scm>
 
 	<dependencies>
-		
+		<dependency>
+			<groupId>com.aliyun.msea</groupId>
+			<artifactId>msea-share-biz-monitor</artifactId>
+			<version>5.11.6-jakarta</version>
+		</dependency>
 		<!-- production dependencies -->
 
 		<dependency>
@@ -83,7 +87,7 @@
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-test</artifactId>
-			<version>${project.version}</version>
+			<version>${project.parent.version}</version>
 			<scope>test</scope>
 		</dependency>
 

@@ -4,6 +4,7 @@ target
 .project
 .settings
 .env
+*.versionsBackup
 bin
 build.log
 integration-repo

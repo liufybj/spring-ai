@@ -18,6 +18,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.taobao</groupId>
+		<artifactId>parent</artifactId>
+		<version>2.0.0</version>
+	</parent>
 
 	<groupId>org.springframework.ai</groupId>
 	<artifactId>spring-ai-parent</artifactId>
@@ -233,40 +238,6 @@
 		<module>mcp/mcp-annotations-spring</module>
 	</modules>
 
-	<organization>
-		<name>VMware Inc.</name>
-		<url>https://spring.io</url>
-	</organization>
-	<scm>
-		<url>https://github.com/spring-projects/spring-ai</url>
-		<connection>git://github.com/spring-projects/spring-ai.git</connection>
-		<developerConnection>git@github.com:spring-projects/spring-ai.git</developerConnection>
-	</scm>
-	<issueManagement>
-		<system>Github Issues</system>
-		<url>https://github.com/spring-projects/spring-ai/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Github Actions</system>
-		<url>https://github.com/spring-projects/spring-ai/actions</url>
-	</ciManagement>
-	<distributionManagement>
-		<snapshotRepository>
-			<id>spring-snapshots</id>
-			<url>https://repo.spring.io/libs-snapshot-local</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</snapshotRepository>
-	</distributionManagement>
-	<licenses>
-		<license>
-			<name>Apache 2.0</name>
-			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -374,56 +345,56 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>${maven-checkstyle-plugin.version}</version>
-				<dependencies>
-					<dependency>
-						<groupId>com.puppycrawl.tools</groupId>
-						<artifactId>checkstyle</artifactId>
-						<version>${puppycrawl-tools-checkstyle.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>io.spring.javaformat</groupId>
-						<artifactId>spring-javaformat-checkstyle</artifactId>
-						<version>${spring-javaformat-checkstyle.version}</version>
-					</dependency>
-				</dependencies>
-				<executions>
-					<execution>
-						<id>checkstyle-validation</id>
-						<phase>validate</phase>
-						<inherited>true</inherited>
-						<configuration>
-							<skip>${disable.checks}</skip>
-							<configLocation>src/checkstyle/checkstyle.xml</configLocation>
-							<headerLocation>src/checkstyle/checkstyle-header.txt</headerLocation>
-							<includeTestSourceDirectory>true</includeTestSourceDirectory>
-							<propertyExpansion>
-								checkstyle.build.directory=${project.build.directory}
-								checkstyle.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml
-								checkstyle.additional.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml
-								checkstyle.header.file=${project.basedir}/src/checkstyle/checkstyle-header.txt
-							</propertyExpansion>
-							<consoleOutput>true</consoleOutput>
-							<failsOnError>${maven-checkstyle-plugin.failsOnError}
-							</failsOnError>
-							<failOnViolation>
-								${maven-checkstyle-plugin.failOnViolation}
-							</failOnViolation>
-						</configuration>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-site-plugin</artifactId>
-				<version>${maven-site-plugin.version}</version>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-checkstyle-plugin</artifactId>-->
+<!--				<version>${maven-checkstyle-plugin.version}</version>-->
+<!--				<dependencies>-->
+<!--					<dependency>-->
+<!--						<groupId>com.puppycrawl.tools</groupId>-->
+<!--						<artifactId>checkstyle</artifactId>-->
+<!--						<version>${puppycrawl-tools-checkstyle.version}</version>-->
+<!--					</dependency>-->
+<!--					<dependency>-->
+<!--						<groupId>io.spring.javaformat</groupId>-->
+<!--						<artifactId>spring-javaformat-checkstyle</artifactId>-->
+<!--						<version>${spring-javaformat-checkstyle.version}</version>-->
+<!--					</dependency>-->
+<!--				</dependencies>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>checkstyle-validation</id>-->
+<!--						<phase>validate</phase>-->
+<!--						<inherited>true</inherited>-->
+<!--						<configuration>-->
+<!--							<skip>${disable.checks}</skip>-->
+<!--							<configLocation>src/checkstyle/checkstyle.xml</configLocation>-->
+<!--							<headerLocation>src/checkstyle/checkstyle-header.txt</headerLocation>-->
+<!--							<includeTestSourceDirectory>true</includeTestSourceDirectory>-->
+<!--							<propertyExpansion>-->
+<!--								checkstyle.build.directory=${project.build.directory}-->
+<!--								checkstyle.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml-->
+<!--								checkstyle.additional.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml-->
+<!--								checkstyle.header.file=${project.basedir}/src/checkstyle/checkstyle-header.txt-->
+<!--							</propertyExpansion>-->
+<!--							<consoleOutput>true</consoleOutput>-->
+<!--							<failsOnError>${maven-checkstyle-plugin.failsOnError}-->
+<!--							</failsOnError>-->
+<!--							<failOnViolation>-->
+<!--								${maven-checkstyle-plugin.failOnViolation}-->
+<!--							</failOnViolation>-->
+<!--						</configuration>-->
+<!--						<goals>-->
+<!--							<goal>check</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-site-plugin</artifactId>-->
+<!--				<version>${maven-site-plugin.version}</version>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.jetbrains.kotlin</groupId>
 				<artifactId>kotlin-maven-plugin</artifactId>
@@ -498,36 +469,36 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>${maven-surefire-plugin.version}</version>
-				<configuration>
-					<argLine>${surefireArgLine}</argLine>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-surefire-plugin</artifactId>-->
+<!--				<version>${maven-surefire-plugin.version}</version>-->
+<!--				<configuration>-->
+<!--					<argLine>${surefireArgLine}</argLine>-->
 
-					<useFile>false</useFile>
-					<trimStackTrace>false</trimStackTrace>
+<!--					<useFile>false</useFile>-->
+<!--					<trimStackTrace>false</trimStackTrace>-->
 
-					<!-- Show test timing information -->
-					<reportFormat>plain</reportFormat>
+<!--					&lt;!&ndash; Show test timing information &ndash;&gt;-->
+<!--					<reportFormat>plain</reportFormat>-->
 
-					<!-- Output test execution times in the logs -->
-					<redirectTestOutputToFile>false</redirectTestOutputToFile>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>${maven-jar-plugin.version}</version>
-				<configuration>
-					<archive>
-						<manifestEntries>
-							<Implementation-Title>${project.artifactId}</Implementation-Title>
-							<Implementation-Version>${project.version}</Implementation-Version>
-						</manifestEntries>
-					</archive>
-				</configuration>
-			</plugin>
+<!--					&lt;!&ndash; Output test execution times in the logs &ndash;&gt;-->
+<!--					<redirectTestOutputToFile>false</redirectTestOutputToFile>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-jar-plugin</artifactId>-->
+<!--				<version>${maven-jar-plugin.version}</version>-->
+<!--				<configuration>-->
+<!--					<archive>-->
+<!--						<manifestEntries>-->
+<!--							<Implementation-Title>${project.artifactId}</Implementation-Title>-->
+<!--							<Implementation-Version>${project.version}</Implementation-Version>-->
+<!--						</manifestEntries>-->
+<!--					</archive>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -542,44 +513,44 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>flatten-maven-plugin</artifactId>
-				<version>${flatten-maven-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>flatten</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>flatten</goal>
-						</goals>
-						<configuration>
-							<updatePomFile>true</updatePomFile>
-							<flattenMode>ossrh</flattenMode>
-							<pomElements>
-								<distributionManagement>remove</distributionManagement>
-								<dependencyManagement>remove</dependencyManagement>
-								<repositories>remove</repositories>
-								<scm>keep</scm>
-								<url>keep</url>
-								<organization>resolve</organization>
-							</pomElements>
-						</configuration>
-					</execution>
-					<execution>
-						<id>clean</id>
-						<phase>clean</phase>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>${maven-deploy-plugin.version}</version>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.codehaus.mojo</groupId>-->
+<!--				<artifactId>flatten-maven-plugin</artifactId>-->
+<!--				<version>${flatten-maven-plugin.version}</version>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>flatten</id>-->
+<!--						<phase>process-resources</phase>-->
+<!--						<goals>-->
+<!--							<goal>flatten</goal>-->
+<!--						</goals>-->
+<!--						<configuration>-->
+<!--							<updatePomFile>true</updatePomFile>-->
+<!--							<flattenMode>ossrh</flattenMode>-->
+<!--							<pomElements>-->
+<!--								<distributionManagement>remove</distributionManagement>-->
+<!--								<dependencyManagement>remove</dependencyManagement>-->
+<!--								<repositories>remove</repositories>-->
+<!--								<scm>keep</scm>-->
+<!--								<url>keep</url>-->
+<!--								<organization>resolve</organization>-->
+<!--							</pomElements>-->
+<!--						</configuration>-->
+<!--					</execution>-->
+<!--					<execution>-->
+<!--						<id>clean</id>-->
+<!--						<phase>clean</phase>-->
+<!--						<goals>-->
+<!--							<goal>clean</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-deploy-plugin</artifactId>-->
+<!--				<version>${maven-deploy-plugin.version}</version>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -606,380 +577,6 @@
 		</plugins>
 	</build>
 
-	<profiles>
-		<profile>
-			<id>format-check</id>
-			<activation>
-				<property>
-					<name>env.CI</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>io.spring.javaformat</groupId>
-						<artifactId>spring-javaformat-maven-plugin</artifactId>
-						<version>${spring-javaformat-maven-plugin.version}</version>
-						<executions>
-							<execution>
-								<phase>validate</phase>
-								<inherited>true</inherited>
-								<goals>
-									<goal>validate</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-				</plugins>
-			</build>
-
-		</profile>
-		<profile>
-			<id>format-apply</id>
-			<activation>
-				<property>
-					<name>!env.CI</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>io.spring.javaformat</groupId>
-						<artifactId>spring-javaformat-maven-plugin</artifactId>
-						<version>${spring-javaformat-maven-plugin.version}</version>
-						<executions>
-							<execution>
-								<phase>process-sources</phase>
-								<inherited>true</inherited>
-								<goals>
-									<goal>apply</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-				</plugins>
-			</build>
-
-		</profile>
-		<profile>
-			<id>license</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>com.mycila</groupId>
-						<artifactId>license-maven-plugin</artifactId>
-						<version>4.1</version>
-						<executions>
-							<execution>
-								<phase>validate</phase>
-								<goals>
-									<goal>check</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<properties>
-								<owner>the original author or authors.</owner>
-								<email />
-								<year>2024</year>
-							</properties>
-							<licenseSets>
-								<licenseSet>
-									<inlineHeader>
-										<!-- @formatter:off --> Copyright 2023 - ${year} the original author or
-										authors. Licensed under the Apache License, Version 2.0 (the
-										"License"); you may not use this file except in compliance
-										with the License. You may obtain a copy of the License at
-										https://www.apache.org/licenses/LICENSE-2.0 Unless required
-										by applicable law or agreed to in writing, software
-										distributed under the License is distributed on an "AS IS"
-										BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-										express or implied. See the License for the specific
-										language governing permissions and limitations under the
-										License. <!-- @formatter:on -->
-									</inlineHeader>
-									<excludes>
-										<exclude>**/.antlr/**</exclude>
-										<exclude>**/aot.factories</exclude>
-										<exclude>**/.sdkmanrc</exclude>
-										<exclude>**/*.adoc</exclude>
-										<exclude>**/*.puml</exclude>
-										<exclude>**/pom.xml</exclude>
-										<exclude>**/*.properties</exclude>
-										<exclude>**/*.yaml</exclude>
-										<exclude>**/*.yml</exclude>
-										<exclude>**/*.map</exclude>
-										<exclude>**/*.html</exclude>
-										<exclude>**/*.xhtml</exclude>
-										<exclude>**/*.jsp</exclude>
-										<exclude>**/*.js</exclude>
-										<exclude>**/*.css</exclude>
-										<exclude>**/*.txt</exclude>
-										<exclude>**/*.xjb</exclude>
-										<exclude>**/*.ftl</exclude>
-										<exclude>**/*.xsd</exclude>
-										<exclude>**/*.xml</exclude>
-										<exclude>**/*.sh</exclude>
-										<exclude>**/generated/**</exclude>
-										<exclude>**/Dockerfile</exclude>
-									</excludes>
-								</licenseSet>
-							</licenseSets>
-						</configuration>
-					</plugin>
-
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>integration-tests</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<version>${maven-failsafe-plugin.version}</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-		<profile>
-			<id>ci-fast-integration-tests</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<version>${maven-failsafe-plugin.version}</version>
-						<configuration>
-							<!-- <includes>
-								<include>org.springframework.ai.anthropic**/*IT.java</include>
-							</includes> -->
-
-							<excludes>
-								<!-- Chat Memory -->
-								<exclude>org.springframework.ai.chat.memory/**/*IT.java</exclude>
-
-								<!-- Models -->
-								<exclude>org.springframework.ai.anthropic/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.azure.openai/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.bedrock/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.bedrock.converse/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.elevenlabs/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.huggingface/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.minimax/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.mistralai/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.oci/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.ollama/**/*IT.java</exclude>								<!-- <exclude>org.springframework.ai.openai/**/*IT.java</exclude> -->
-								<exclude>org.springframework.ai.openaisdk/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.postgresml/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.stabilityai/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.transformers/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.vertexai.embedding/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.vertexai.gemini/**/*IT.java</exclude>
-								<exclude>org.springframework.ai.zhipuai/**/*IT.java</exclude>
-
-								<!-- Vector Stores -->
-								<exclude>org.springframework.ai.vectorstore**/CosmosDB**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore.azure/**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Cassandra**IT.java</exclude>
-								<exclude>org.springframework.ai.chroma/**IT.java</exclude>
-								<!-- <exclude>org.springframework.ai.vectorstore/**/**Chroma**IT.java</exclude> -->
-								<exclude>org.springframework.ai.vectorstore**/Coherence**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Elasticsearch**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/GemFire**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Hana**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Hana**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Milvus**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/MariaDB**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Mongo**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Neo4j**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/OpenSearch**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Oracle**IT.java</exclude>
-								<!-- <exclude>org.springframework.ai.vectorstore**/PgVector**IT.java</exclude> -->
-								<exclude>org.springframework.ai.vectorstore**/Pinecone**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore.qdrant/**/**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Qdrant**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Redis**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Typesense**IT.java</exclude>
-								<exclude>org.springframework.ai.vectorstore**/Weaviate**IT.java</exclude>
-
-								<!-- Auto-configurations-->
-
-								 <!-- <exclude>org.springframework.ai.autoconfigure/**/**IT.java</exclude> -->
-
-								 <exclude>org.springframework.ai.autoconfigure.anthropic/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.azure/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.bedrock/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.huggingface/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.chat/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.elevenlabs/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.embedding/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.image/**/**IT.java</exclude>
-
-
-								 <exclude>org.springframework.ai.autoconfigure.minimax/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.mistralai/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.oci/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.ollama/**/**IT.java</exclude>
-								 <!-- <exclude>org.springframework.ai.autoconfigure.openai/**/**IT.java</exclude> -->
-								 <exclude>org.springframework.ai.autoconfigure.postgresml/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.retry/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.stabilityai/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.transformers/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.vectorstore/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.vertexai/**/**IT.java</exclude>
-								 <exclude>org.springframework.ai.autoconfigure.zhipuai/**/**IT.java</exclude>
-
-								 <exclude>org.springframework.ai.autoconfigure.zhipuai/**/**IT.java</exclude>
-
-								 <!-- Test Containers -->
-								 <exclude>org.springframework.ai.testcontainers/**/**IT.java</exclude>
-
-								 <!-- Test Docker Compose -->
-								 <exclude>org.springframework.ai.docker.compose/**/**IT.java</exclude>
-
-								 <!-- AI Evaluation -->
-								 <exclude>org.springframework.ai.integration.tests/**/**IT.java</exclude>
-							</excludes>
-
-							<!-- <includes>
-								<include>**/*IT.java</include>
-							</includes>
-
-							<dependenciesToScan>
-								<dependency>org.springframework.ai:spring-ai-anthropic</dependency>
-							</dependenciesToScan> -->
-						</configuration>
-						<executions>
-							<execution>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>test-coverage</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco-maven-plugin.version}</version>
-						<executions>
-							<execution>
-								<id>prepare-agent</id>
-								<goals>
-									<goal>prepare-agent</goal>
-								</goals>
-							</execution>
-							<execution>
-								<id>report</id>
-								<goals>
-									<goal>report</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>artifactory-staging</id>
-			<distributionManagement>
-				<repository>
-					<id>spring-staging</id>
-					<url>https://repo.spring.io/libs-staging-local</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</distributionManagement>
-		</profile>
-		<profile>
-			<id>artifactory-milestone</id>
-			<distributionManagement>
-				<repository>
-					<id>spring-milestones</id>
-					<url>https://repo.spring.io/libs-milestone-local</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</distributionManagement>
-		</profile>
-		<profile>
-	    <id>sonatype</id>
-	    <properties>
-	        <maven.test.skip>true</maven.test.skip>
-	    </properties>
-	    <build>
-	        <plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-gpg-plugin</artifactId>
-					<version>${maven-gpg-plugin.version}</version>
-					<executions>
-						<execution>
-							<id>sign-artifacts</id>
-							<phase>verify</phase>
-							<goals>
-								<goal>sign</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<!-- Passphrase consumed from MAVEN_GPG_PASSPHRASE environment variable. -->
-					</configuration>
-				</plugin>
-	            <plugin>
-	                <groupId>org.sonatype.central</groupId>
-	                <artifactId>central-publishing-maven-plugin</artifactId>
-	                <extensions>true</extensions>
-	                <configuration>
-	                    <publishingServerId>central</publishingServerId>
-	                    <autoPublish>true</autoPublish>
-	                    <excludeArtifacts>spring-ai-integration-tests</excludeArtifacts>
-	                </configuration>
-	            </plugin>
-	        </plugins>
-	    </build>
-	</profile>
-
-
-	</profiles>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -1004,106 +601,5 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
-	<repositories>
-		<repository>
-			<name>Central Portal Snapshots</name>
-			<id>central-portal-snapshots</id>
-			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>maven-central</id>
-			<url>https://repo.maven.apache.org/maven2/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-snapshots</id>
-			<name>Spring Snapshots</name>
-			<url>https://repo.spring.io/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
-	<developers>
-		<developer>
-			<id>mpollack</id>
-			<name>Mark Pollack</name>
-			<email>mpollack at vmware.com</email>
-			<organization>VMware</organization>
-			<organizationUrl>http://www.spring.io</organizationUrl>
-			<roles>
-				<role>lead</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>tzolov</id>
-			<name>Christian Tzolov</name>
-			<email>christian tzolov at broadcom.com</email>
-			<organization>Broadcom</organization>
-			<organizationUrl>http://www.spring.io</organizationUrl>
-			<roles>
-				<role>lead</role>
-			</roles>
-		</developer>
-	</developers>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>${maven-project-info-reports-plugin.version}</version>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>${maven-checkstyle-plugin.version}</version>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>checkstyle</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-				<configuration>
-					<configLocation>src/checkstyle/checkstyle.xml</configLocation>
-					<headerLocation>src/checkstyle/checkstyle-header.txt</headerLocation>
-					<propertyExpansion>
-						checkstyle.build.directory=${project.build.directory}
-						checkstyle.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml
-						checkstyle.additional.suppressions.file=${project.basedir}/src/checkstyle/checkstyle-suppressions.xml
-						checkstyle.header.file=${project.basedir}/src/checkstyle/checkstyle-header.txt
-					</propertyExpansion>
-				</configuration>
-			</plugin>
-		</plugins>
-	</reporting>
 
 </project>

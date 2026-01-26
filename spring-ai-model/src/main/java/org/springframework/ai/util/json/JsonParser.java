@@ -26,19 +26,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.util.JacksonUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
+import static com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS;
+
 /**
  * Utilities to perform parsing operations between JSON and Java.
  */
+@Slf4j
 public final class JsonParser {
 
 	private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
 		.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 		.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+//			.enable(ALLOW_UNQUOTED_CONTROL_CHARS)
 		.addModules(JacksonUtils.instantiateAvailableModules())
 		.build();
 
@@ -64,6 +69,7 @@ public final class JsonParser {
 			return OBJECT_MAPPER.readValue(json, type);
 		}
 		catch (JsonProcessingException ex) {
+			log.error("ErrorJsonString = {}", json);
 			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getName()), ex);
 		}
 	}
@@ -79,6 +85,7 @@ public final class JsonParser {
 			return OBJECT_MAPPER.readValue(json, OBJECT_MAPPER.constructType(type));
 		}
 		catch (JsonProcessingException ex) {
+			log.error("ErrorJsonString = {}", json);
 			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getTypeName()), ex);
 		}
 	}
@@ -94,6 +101,7 @@ public final class JsonParser {
 			return OBJECT_MAPPER.readValue(json, type);
 		}
 		catch (JsonProcessingException ex) {
+			log.error("ErrorJsonString = {}", json);
 			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getType().getTypeName()),
 					ex);
 		}

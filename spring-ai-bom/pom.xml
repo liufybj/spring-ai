@@ -18,9 +18,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.ai</groupId>
+		<artifactId>spring-ai-parent</artifactId>
+		<version>1.1.2</version>
+	</parent>
 
-	<groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-bom</artifactId>
+	<artifactId>spring-ai-bom</artifactId>
 	<version>1.1.2</version>
 
     <packaging>pom</packaging>
@@ -49,20 +53,20 @@
 		<system>Github Actions</system>
 		<url>https://github.com/spring-projects/spring-ai/actions</url>
 	</ciManagement>
-	<distributionManagement>
-		<snapshotRepository>
-			<id>spring-snapshots</id>
-			<url>https://repo.spring.io/libs-snapshot-local</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</snapshotRepository>
-		<repository>
-			<id>repo.spring.io</id>
-			<name>Spring Release Repository</name>
-			<url>https://repo.spring.io/libs-release-local</url>
-		</repository>
-	</distributionManagement>
+<!--	<distributionManagement>-->
+<!--		<snapshotRepository>-->
+<!--			<id>spring-snapshots</id>-->
+<!--			<url>https://repo.spring.io/libs-snapshot-local</url>-->
+<!--			<releases>-->
+<!--				<enabled>false</enabled>-->
+<!--			</releases>-->
+<!--		</snapshotRepository>-->
+<!--		<repository>-->
+<!--			<id>repo.spring.io</id>-->
+<!--			<name>Spring Release Repository</name>-->
+<!--			<url>https://repo.spring.io/libs-release-local</url>-->
+<!--		</repository>-->
+<!--	</distributionManagement>-->
 	<licenses>
 		<license>
 			<name>Apache 2.0</name>
@@ -1211,48 +1215,48 @@
 
     </dependencyManagement>
 
-	<repositories>
-		<repository>
-			<name>Central Portal Snapshots</name>
-			<id>central-portal-snapshots</id>
-			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>maven-central</id>
-			<url>https://repo.maven.apache.org/maven2/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-snapshots</id>
-			<name>Spring Snapshots</name>
-			<url>https://repo.spring.io/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+<!--	<repositories>-->
+<!--		<repository>-->
+<!--			<name>Central Portal Snapshots</name>-->
+<!--			<id>central-portal-snapshots</id>-->
+<!--			<url>https://central.sonatype.com/repository/maven-snapshots/</url>-->
+<!--			<releases>-->
+<!--				<enabled>false</enabled>-->
+<!--			</releases>-->
+<!--			<snapshots>-->
+<!--				<enabled>true</enabled>-->
+<!--			</snapshots>-->
+<!--		</repository>-->
+<!--		<repository>-->
+<!--			<id>maven-central</id>-->
+<!--			<url>https://repo.maven.apache.org/maven2/</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>true</enabled>-->
+<!--			</snapshots>-->
+<!--			<releases>-->
+<!--				<enabled>true</enabled>-->
+<!--			</releases>-->
+<!--		</repository>-->
+<!--		<repository>-->
+<!--			<id>spring-snapshots</id>-->
+<!--			<name>Spring Snapshots</name>-->
+<!--			<url>https://repo.spring.io/snapshot</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>true</enabled>-->
+<!--			</snapshots>-->
+<!--			<releases>-->
+<!--				<enabled>false</enabled>-->
+<!--			</releases>-->
+<!--		</repository>-->
+<!--		<repository>-->
+<!--			<id>spring-milestones</id>-->
+<!--			<name>Spring Milestones</name>-->
+<!--			<url>https://repo.spring.io/milestone</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>false</enabled>-->
+<!--			</snapshots>-->
+<!--		</repository>-->
+<!--	</repositories>-->
 
 	<developers>
 		<developer>
@@ -1337,23 +1341,6 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>${maven-surefire-plugin.version}</version>
-				<configuration>
-					<argLine>${surefireArgLine}</argLine>
-
-					<useFile>false</useFile>
-					<trimStackTrace>false</trimStackTrace>
-
-					<!-- Show test timing information -->
-					<reportFormat>plain</reportFormat>
-
-					<!-- Output test execution times in the logs -->
-					<redirectTestOutputToFile>false</redirectTestOutputToFile>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>${maven-jar-plugin.version}</version>
 				<configuration>
@@ -1412,11 +1399,11 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>${maven-deploy-plugin.version}</version>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-deploy-plugin</artifactId>-->
+<!--				<version>${maven-deploy-plugin.version}</version>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -1442,68 +1429,68 @@
 		</plugins>
 	</build>
 
-	<profiles>
-		<profile>
-			<id>artifactory-staging</id>
-			<distributionManagement>
-				<repository>
-					<id>spring-staging</id>
-					<url>https://repo.spring.io/libs-staging-local</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</distributionManagement>
-		</profile>
-		<profile>
-			<id>artifactory-milestone</id>
-			<distributionManagement>
-				<repository>
-					<id>spring-milestones</id>
-					<url>https://repo.spring.io/libs-milestone-local</url>
-					<snapshots>
-						<enabled>false</enabled>
-					</snapshots>
-				</repository>
-			</distributionManagement>
-		</profile>
-    <profile>
-	    <id>sonatype</id>
-	    <properties>
-	        <maven.test.skip>true</maven.test.skip>
-	    </properties>
-	    <build>
-	        <plugins>
-	            <plugin>
-	                <groupId>org.sonatype.central</groupId>
-	                <artifactId>central-publishing-maven-plugin</artifactId>
-	                <version>0.8.0</version>
-	                <extensions>true</extensions>
-	                <configuration>
-	                    <publishingServerId>central</publishingServerId>
-	                    <autoPublish>true</autoPublish>
-	                </configuration>
-	            </plugin>
-	            <plugin>
-	                <groupId>org.apache.maven.plugins</groupId>
-	                <artifactId>maven-gpg-plugin</artifactId>
-	                <version>3.2.5</version>
-	                <executions>
-	                    <execution>
-	                        <id>sign-artifacts</id>
-	                        <phase>verify</phase>
-	                        <goals>
-	                            <goal>sign</goal>
-	                        </goals>
-	                    </execution>
-	                </executions>
-	                <configuration>
-	                    <!-- Passphrase consumed from MAVEN_GPG_PASSPHRASE environment variable. -->
-	                </configuration>
-	            </plugin>
-	        </plugins>
-	    </build>
-	   </profile>
-	</profiles>
+<!--	<profiles>-->
+<!--		<profile>-->
+<!--			<id>artifactory-staging</id>-->
+<!--			<distributionManagement>-->
+<!--				<repository>-->
+<!--					<id>spring-staging</id>-->
+<!--					<url>https://repo.spring.io/libs-staging-local</url>-->
+<!--					<snapshots>-->
+<!--						<enabled>false</enabled>-->
+<!--					</snapshots>-->
+<!--				</repository>-->
+<!--			</distributionManagement>-->
+<!--		</profile>-->
+<!--		<profile>-->
+<!--			<id>artifactory-milestone</id>-->
+<!--			<distributionManagement>-->
+<!--				<repository>-->
+<!--					<id>spring-milestones</id>-->
+<!--					<url>https://repo.spring.io/libs-milestone-local</url>-->
+<!--					<snapshots>-->
+<!--						<enabled>false</enabled>-->
+<!--					</snapshots>-->
+<!--				</repository>-->
+<!--			</distributionManagement>-->
+<!--		</profile>-->
+<!--    <profile>-->
+<!--	    <id>sonatype</id>-->
+<!--	    <properties>-->
+<!--	        <maven.test.skip>true</maven.test.skip>-->
+<!--	    </properties>-->
+<!--	    <build>-->
+<!--	        <plugins>-->
+<!--	            <plugin>-->
+<!--	                <groupId>org.sonatype.central</groupId>-->
+<!--	                <artifactId>central-publishing-maven-plugin</artifactId>-->
+<!--	                <version>0.8.0</version>-->
+<!--	                <extensions>true</extensions>-->
+<!--	                <configuration>-->
+<!--	                    <publishingServerId>central</publishingServerId>-->
+<!--	                    <autoPublish>true</autoPublish>-->
+<!--	                </configuration>-->
+<!--	            </plugin>-->
+<!--	            <plugin>-->
+<!--	                <groupId>org.apache.maven.plugins</groupId>-->
+<!--	                <artifactId>maven-gpg-plugin</artifactId>-->
+<!--	                <version>3.2.5</version>-->
+<!--	                <executions>-->
+<!--	                    <execution>-->
+<!--	                        <id>sign-artifacts</id>-->
+<!--	                        <phase>verify</phase>-->
+<!--	                        <goals>-->
+<!--	                            <goal>sign</goal>-->
+<!--	                        </goals>-->
+<!--	                    </execution>-->
+<!--	                </executions>-->
+<!--	                <configuration>-->
+<!--	                    &lt;!&ndash; Passphrase consumed from MAVEN_GPG_PASSPHRASE environment variable. &ndash;&gt;-->
+<!--	                </configuration>-->
+<!--	            </plugin>-->
+<!--	        </plugins>-->
+<!--	    </build>-->
+<!--	   </profile>-->
+<!--	</profiles>-->
 
 </project>

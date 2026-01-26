@@ -213,16 +213,19 @@ public class OpenAiChatModel implements ChatModel {
 				}
 
 			// @formatter:off
-				List<Generation> generations = choices.stream().map(choice -> {
-					Map<String, Object> metadata = Map.of(
-							"id", chatCompletion.id() != null ? chatCompletion.id() : "",
-							"role", choice.message().role() != null ? choice.message().role().name() : "",
-							"index", choice.index() != null ? choice.index() : 0,
-							"finishReason", getFinishReasonJson(choice.finishReason()),
-							"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
-							"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(Map.of()));
-					return buildGeneration(choice, metadata, request);
-				}).toList();
+				// modified by liufy 增加filter
+				List<Generation> generations = choices.stream()
+						.filter(choice -> choice.message() != null)
+						.map(choice -> {
+							Map<String, Object> metadata = Map.of(
+									"id", chatCompletion.id() != null ? chatCompletion.id() : "",
+									"role", choice.message().role() != null ? choice.message().role().name() : "",
+									"index", choice.index() != null ? choice.index() : 0,
+									"finishReason", getFinishReasonJson(choice.finishReason()),
+									"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
+									"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(Map.of()));
+							return buildGeneration(choice, metadata, request);
+						}).toList();
 				// @formatter:on
 
 				RateLimit rateLimit = OpenAiResponseHeaderExtractor.extractAiResponseHeaders(completionEntity);
@@ -283,8 +286,7 @@ public class OpenAiChatModel implements ChatModel {
 				throw new IllegalArgumentException("Audio parameters are not supported for streaming requests.");
 			}
 
-			Flux<OpenAiApi.ChatCompletionChunk> completionChunks = this.openAiApi.chatCompletionStream(request,
-					getAdditionalHttpHeaders(prompt));
+			Flux<OpenAiApi.ChatCompletionChunk> completionChunks = this.openAiApi.chatCompletionStream(request, getAdditionalHttpHeaders(prompt));
 
 			// For chunked responses, only the first chunk contains the choice role.
 			// The rest of the chunks with same ID share the same role.
@@ -309,20 +311,24 @@ public class OpenAiChatModel implements ChatModel {
 						// If an id is not provided, set to "NO_ID" (for compatible APIs).
 						String id = chatCompletion2.id() == null ? "NO_ID" : chatCompletion2.id();
 
-						List<Generation> generations = chatCompletion2.choices().stream().map(choice -> { // @formatter:off
-							if (choice.message().role() != null) {
-								roleMap.putIfAbsent(id, choice.message().role().name());
-							}
-							Map<String, Object> metadata = Map.of(
-									"id", id,
-									"role", roleMap.getOrDefault(id, ""),
-									"index", choice.index() != null ? choice.index() : 0,
-									"finishReason", getFinishReasonJson(choice.finishReason()),
-									"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
-									"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(),
-									"reasoningContent", choice.message().reasoningContent() != null ? choice.message().reasoningContent() : "");
-							return buildGeneration(choice, metadata, request);
-						}).toList();
+						// modified by liufy
+						List<Generation> generations = chatCompletion2.choices()
+								.stream()
+								.filter(choice -> choice.message() != null)
+								.map(choice -> { // @formatter:off
+									if (choice.message().role() != null) {
+										roleMap.putIfAbsent(id, choice.message().role().name());
+									}
+									Map<String, Object> metadata = Map.of(
+											"id", id,
+											"role", roleMap.getOrDefault(id, ""),
+											"index", choice.index() != null ? choice.index() : 0,
+											"finishReason", getFinishReasonJson(choice.finishReason()),
+											"refusal", StringUtils.hasText(choice.message().refusal()) ? choice.message().refusal() : "",
+											"annotations", choice.message().annotations() != null ? choice.message().annotations() : List.of(),
+											"reasoningContent", choice.message().reasoningContent() != null ? choice.message().reasoningContent() : "");
+									return buildGeneration(choice, metadata, request);
+								}).toList();
 						// @formatter:on
 						OpenAiApi.Usage usage = chatCompletion2.usage();
 						Usage currentChatResponseUsage = usage != null ? getDefaultUsage(usage) : new EmptyUsage();
@@ -597,7 +603,12 @@ public class OpenAiChatModel implements ChatModel {
 				Object content = message.getText();
 				if (message instanceof UserMessage userMessage) {
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						List<MediaContent> contentList = new ArrayList<>(List.of(new MediaContent(message.getText())));
+						List<MediaContent> contentList;
+						if (message.getText() == null || userMessage.getText().equals("")) {
+							contentList = new ArrayList<>();
+						} else {
+							contentList = new ArrayList<>(List.of(new MediaContent(message.getText())));
+						}
 
 						contentList.addAll(userMessage.getMedia().stream().map(this::mapToMediaContent).toList());
 
@@ -630,13 +641,15 @@ public class OpenAiChatModel implements ChatModel {
 			else if (message.getMessageType() == MessageType.TOOL) {
 				ToolResponseMessage toolMessage = (ToolResponseMessage) message;
 
-				toolMessage.getResponses()
-					.forEach(response -> Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id"));
+				// modified by liufy 过滤id为null的
+//				toolMessage.getResponses()
+//					.forEach(response -> Assert.isTrue(response.id() != null, "ToolResponseMessage must have an id"));
 				return toolMessage.getResponses()
-					.stream()
-					.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
-							tr.id(), null, null, null, null, null))
-					.toList();
+						.stream()
+						.filter(response -> response.id() != null)
+						.map(tr -> new ChatCompletionMessage(tr.responseData(), ChatCompletionMessage.Role.TOOL, tr.name(),
+								tr.id(), null, null, null, null, null))
+						.toList();
 			}
 			else {
 				throw new IllegalArgumentException("Unsupported message type: " + message.getMessageType());
@@ -667,6 +680,11 @@ public class OpenAiChatModel implements ChatModel {
 
 	private MediaContent mapToMediaContent(Media media) {
 		var mimeType = media.getMimeType();
+		// modified by liufy add text
+		if ("text".equals(mimeType.getType())) {
+			return new MediaContent(media.getData().toString());
+		}
+
 		if (MimeTypeUtils.parseMimeType("audio/mp3").equals(mimeType)) {
 			return new MediaContent(
 					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.MP3));
