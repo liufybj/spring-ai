@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.aliyun.domain.monitor.executor.TransmittableEagleEyeTool;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -68,6 +70,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @author Alexandros Pappas
  * @author Filip Hrisafov
  */
+@Slf4j
 public class OpenAiApi {
 
     public static final String HTTP_USER_AGENT_HEADER = "User-Agent";
@@ -246,6 +249,7 @@ public class OpenAiApi {
         AtomicBoolean isInsideTool = new AtomicBoolean(false);
         final AtomicReference<ChatCompletionChunk> preChunk = new AtomicReference<>(new ChatCompletionChunk(null, null, null, null, null, null, null, null));
 
+        TransmittableEagleEyeTool transmittableEagleEyeTool = new TransmittableEagleEyeTool();
         // @formatter:off
 		return this.webClient.post()
 			.uri(this.completionsPath)
@@ -314,6 +318,10 @@ public class OpenAiApi {
 //			.flatMap(mono -> mono);
                 .index()
                 .filter(tuple -> !ObjectUtils.isEmpty(tuple.getT2().choices))
+                .doOnNext(tuple -> {
+                    // 传递父线程的全链路业务日志的上下文
+                    transmittableEagleEyeTool.restoreContext();
+                })
                 .concatMap((tuple) -> {
                     // 当前chunk
                     ChatCompletionChunk chunk = tuple.getT2();
@@ -328,6 +336,8 @@ public class OpenAiApi {
                     }
 
                     if (isInsideTool.get()) {
+                        log.info("工具 chunk：{}", chunk);
+
                         // 在工具调用内部，合并 chunk
                         preChunk.set(chunkMerger.merge(preChunk.get(), chunk));
 

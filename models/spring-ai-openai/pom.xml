@@ -37,7 +37,11 @@
 	</scm>
 
 	<dependencies>
-		
+		<dependency>
+			<groupId>com.aliyun.msea</groupId>
+			<artifactId>msea-share-biz-monitor</artifactId>
+			<version>5.11.6-jakarta</version>
+		</dependency>
 		<!-- production dependencies -->
 
 		<dependency>
