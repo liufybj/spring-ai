@@ -59,7 +59,7 @@ public class OpenAiStreamFunctionCallingHelper {
 			return current;
 		}
 
-		if (current == null) {
+		if (current == null || CollectionUtils.isEmpty(current.choices())) {
 			return previous;
 		}
 

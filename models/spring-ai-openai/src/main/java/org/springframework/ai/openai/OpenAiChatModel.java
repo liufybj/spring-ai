@@ -16,11 +16,7 @@
 
 package org.springframework.ai.openai;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -306,6 +302,7 @@ public class OpenAiChatModel implements ChatModel {
 			// Convert the ChatCompletionChunk into a ChatCompletion to be able to reuse
 			// the function call handling logic.
 			Flux<ChatResponse> chatResponse = completionChunks.map(this::chunkToChatCompletion)
+				.filter(Objects::nonNull)
 				.switchMap(chatCompletion -> Mono.just(chatCompletion).map(chatCompletion2 -> {
 					try {
 						// If an id is not provided, set to "NO_ID" (for compatible APIs).
@@ -504,6 +501,9 @@ public class OpenAiChatModel implements ChatModel {
 	 * @return the ChatCompletion
 	 */
 	private OpenAiApi.ChatCompletion chunkToChatCompletion(OpenAiApi.ChatCompletionChunk chunk) {
+		if (chunk.choices() == null) {
+			return null;
+		}
 		List<Choice> choices = chunk.choices()
 			.stream()
 			.map(chunkChoice -> new Choice(chunkChoice.finishReason(), chunkChoice.index(), chunkChoice.delta(),
@@ -582,23 +582,22 @@ public class OpenAiChatModel implements ChatModel {
 
 		List<ChatCompletionMessage> chatCompletionMessages = prompt.getInstructions().stream().map(message -> {
 			if (message.getMessageType() == MessageType.USER || message.getMessageType() == MessageType.SYSTEM) {
-				Object content = message.getText();
+				List<MediaContent> contentList = new ArrayList<>();
 				if (message instanceof UserMessage userMessage) {
+					if (!userMessage.getText().isEmpty()) {
+						contentList.add(new MediaContent(message.getText()));
+					}
 					if (!CollectionUtils.isEmpty(userMessage.getMedia())) {
-						List<MediaContent> contentList;
-						if (message.getText() == null || userMessage.getText().equals("")) {
-							contentList = new ArrayList<>();
-						} else {
-							contentList = new ArrayList<>(List.of(new MediaContent(message.getText())));
-						}
-
 						contentList.addAll(userMessage.getMedia().stream().map(this::mapToMediaContent).toList());
-
-						content = contentList;
+					}
+				} else {
+					if (!message.getText().isEmpty()) {
+						// 系统提示词，默认都开启缓存
+						contentList.add(new MediaContent(message.getText(), MediaContent.CacheControl.ephemeral()));
 					}
 				}
 
-				return List.of(new ChatCompletionMessage(content,
+				return List.of(new ChatCompletionMessage(contentList,
 						ChatCompletionMessage.Role.valueOf(message.getMessageType().name())));
 			}
 			else if (message.getMessageType() == MessageType.ASSISTANT) {
@@ -638,7 +637,18 @@ public class OpenAiChatModel implements ChatModel {
 			}
 		}).flatMap(List::stream).toList();
 
-		ChatCompletionRequest request = new ChatCompletionRequest(chatCompletionMessages, stream);
+		// 将最后一个 TOOL 消息的 rawContent 改为带缓存控制的 MediaContent
+		chatCompletionMessages = enableCacheControlOnLastToolMessage(chatCompletionMessages);
+
+		// add by liufy: claude 模型工具参数流式返回
+		ChatCompletionRequest request;
+		Map<String, Object> extendParams;
+		if (prompt.getOptions().getModel().startsWith("claude")) {
+			extendParams = Map.of("anthropic_beta", List.of("fine-grained-tool-streaming-2025-05-14"));
+			request = new ChatCompletionRequest(chatCompletionMessages, stream, extendParams);
+		} else {
+			request = new ChatCompletionRequest(chatCompletionMessages, stream, ChatCompletionRequest.StreamOptions.INCLUDE_USAGE);
+		}
 
 		OpenAiChatOptions requestOptions = (OpenAiChatOptions) prompt.getOptions();
 		request = ModelOptionsUtils.merge(requestOptions, request, ChatCompletionRequest.class);
@@ -660,28 +670,55 @@ public class OpenAiChatModel implements ChatModel {
 		return request;
 	}
 
+	/**
+	 * 找到最后一个 TOOL 角色的消息，将其 rawContent 包装为带 cache_control 的 MediaContent。
+	 */
+	private List<ChatCompletionMessage> enableCacheControlOnLastToolMessage(List<ChatCompletionMessage> messages) {
+		int lastToolIndex = -1;
+		for (int i = messages.size() - 1; i >= 0; i--) {
+			if (messages.get(i).role() == ChatCompletionMessage.Role.TOOL) {
+				lastToolIndex = i;
+				break;
+			}
+		}
+		if (lastToolIndex < 0) {
+			return messages;
+		}
+		List<ChatCompletionMessage> result = new ArrayList<>(messages);
+		ChatCompletionMessage original = result.get(lastToolIndex);
+		String text = original.content();
+		List<MediaContent> contentList = List.of(new MediaContent(text != null ? text : "", MediaContent.CacheControl.ephemeral()));
+		ChatCompletionMessage replaced = new ChatCompletionMessage(contentList, original.role(),
+				original.name(), original.toolCallId(), original.toolCalls(),
+				original.refusal(), original.audioOutput(), original.annotations(), original.reasoningContent());
+		result.set(lastToolIndex, replaced);
+		return result;
+	}
+
 	private MediaContent mapToMediaContent(Media media) {
 		var mimeType = media.getMimeType();
+		MediaContent.CacheControl cacheControl = media.getCacheControl() == null ? null : MediaContent.CacheControl.ephemeral();
+
 		// modified by liufy add text
 		if ("text".equals(mimeType.getType())) {
-			return new MediaContent(media.getData().toString());
+			return new MediaContent(media.getData().toString(), cacheControl);
 		}
 
 		if (MimeTypeUtils.parseMimeType("audio/mp3").equals(mimeType)) {
 			return new MediaContent(
-					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.MP3));
+					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.MP3), cacheControl);
 		}
 		if (MimeTypeUtils.parseMimeType("audio/wav").equals(mimeType)) {
 			return new MediaContent(
-					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.WAV));
+					new MediaContent.InputAudio(fromAudioData(media.getData()), MediaContent.InputAudio.Format.WAV), cacheControl);
 		}
 		if (MimeTypeUtils.parseMimeType("application/pdf").equals(mimeType)) {
 			return new MediaContent(new MediaContent.InputFile(media.getName(),
-					this.fromMediaData(media.getMimeType(), media.getData())));
+					this.fromMediaData(media.getMimeType(), media.getData())), cacheControl);
 		}
 		else {
 			return new MediaContent(
-					new MediaContent.ImageUrl(this.fromMediaData(media.getMimeType(), media.getData())));
+					new MediaContent.ImageUrl(this.fromMediaData(media.getMimeType(), media.getData())), cacheControl);
 		}
 	}
 

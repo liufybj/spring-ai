@@ -102,6 +102,12 @@ public class Media {
 	private final String name;
 
 	/**
+	 * Cache control settings for prompt caching (e.g., {@code {"type": "ephemeral"}}).
+	 */
+	@Nullable
+	private CacheControl cacheControl;
+
+	/**
 	 * Create a new Media instance.
 	 * @param mimeType the media MIME type
 	 * @param uri the URI for the media data
@@ -113,6 +119,7 @@ public class Media {
 		this.id = null;
 		this.data = uri.toString();
 		this.name = generateDefaultName(mimeType);
+		this.cacheControl = null;
 	}
 
 	/**
@@ -129,6 +136,7 @@ public class Media {
 			this.id = null;
 			this.data = bytes;
 			this.name = generateDefaultName(mimeType);
+			this.cacheControl = null;
 		}
 		catch (IOException e) {
 			throw new RuntimeException(e);
@@ -149,13 +157,15 @@ public class Media {
 	 * @param data the media data
 	 * @param id the media id
 	 */
-	private Media(MimeType mimeType, Object data, @Nullable String id, @Nullable String name) {
+	private Media(MimeType mimeType, Object data, @Nullable String id, @Nullable String name,
+			@Nullable CacheControl cacheControl) {
 		Assert.notNull(mimeType, "MimeType must not be null");
 		Assert.notNull(data, "Data must not be null");
 		this.mimeType = mimeType;
 		this.id = id;
 		this.name = (name != null) ? name : generateDefaultName(mimeType);
 		this.data = data;
+		this.cacheControl = cacheControl;
 	}
 
 	private static String generateDefaultName(MimeType mimeType) {
@@ -205,6 +215,45 @@ public class Media {
 	}
 
 	/**
+	 * Get the cache control settings.
+	 * @return the cache control, or null if not set
+	 */
+	@Nullable
+	public CacheControl getCacheControl() {
+		return this.cacheControl;
+	}
+
+	public void setCacheControl(@Nullable CacheControl cacheControl) {
+		this.cacheControl = cacheControl;
+	}
+
+	/**
+	 * Cache control settings for prompt caching.
+	 */
+	public static class CacheControl {
+
+		private final String type;
+
+		public CacheControl(String type) {
+			Assert.notNull(type, "Type must not be null");
+			this.type = type;
+		}
+
+		/**
+		 * Creates an ephemeral cache control instance.
+		 * @return a CacheControl with type "ephemeral"
+		 */
+		public static CacheControl ephemeral() {
+			return new CacheControl("ephemeral");
+		}
+
+		public String getType() {
+			return this.type;
+		}
+
+	}
+
+	/**
 	 * Builder class for Media.
 	 */
 	public static final class Builder {
@@ -216,6 +265,8 @@ public class Media {
 		private Object data;
 
 		private String name;
+
+		private CacheControl cacheControl;
 
 		private Builder() {
 		}
@@ -310,12 +361,22 @@ public class Media {
 		}
 
 		/**
+		 * Sets the cache control settings for the media object.
+		 * @param cacheControl the cache control settings
+		 * @return the builder instance
+		 */
+		public Builder cacheControl(CacheControl cacheControl) {
+			this.cacheControl = cacheControl;
+			return this;
+		}
+
+		/**
 		 * Builds a new Media instance with the configured properties.
 		 * @return a new Media instance
 		 * @throws IllegalArgumentException if mimeType or data are null
 		 */
 		public Media build() {
-			return new Media(this.mimeType, this.data, this.id, this.name);
+			return new Media(this.mimeType, this.data, this.id, this.name, this.cacheControl);
 		}
 
 	}
