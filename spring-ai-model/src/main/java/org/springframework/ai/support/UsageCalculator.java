@@ -59,7 +59,12 @@ public final class UsageCalculator {
 			promptTokens += usageFromPreviousChatResponse.getPromptTokens();
 			generationTokens += usageFromPreviousChatResponse.getCompletionTokens();
 			totalTokens += usageFromPreviousChatResponse.getTotalTokens();
-			return new DefaultUsage(promptTokens, generationTokens, totalTokens);
+			// Preserve the nativeUsage from the current usage so provider-specific
+			// details (e.g., prompt_tokens_details, completion_tokens_details) are
+			// passed through.
+			Object nativeUsage = (currentUsage instanceof DefaultUsage)
+					? ((DefaultUsage) currentUsage).getNativeUsage() : null;
+			return new DefaultUsage(promptTokens, generationTokens, totalTokens, nativeUsage);
 		}
 		// When current usage is empty, return the usage from the previous chat response.
 		return usageFromPreviousChatResponse;

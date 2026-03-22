@@ -40,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.ChatModelDescription;
@@ -55,6 +58,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import thdlib.com.alibaba.fastjson2.JSON;
 
 /**
  * Single class implementation of the
@@ -246,25 +251,27 @@ public class OpenAiApi {
         Assert.notNull(chatRequest, REQUEST_BODY_NULL_MESSAGE);
         Assert.isTrue(chatRequest.stream(), "Request must set the stream property to true.");
 
-        AtomicBoolean isInsideTool = new AtomicBoolean(false);
-        final AtomicReference<ChatCompletionChunk> preChunk = new AtomicReference<>(new ChatCompletionChunk(null, null, null, null, null, null, null, null));
+        // Use Flux.defer to ensure each retry attempt creates fresh state and a new HTTP request
+        return Flux.<ChatCompletionChunk>defer(() -> {
+            AtomicBoolean isInsideTool = new AtomicBoolean(false);
+            final AtomicReference<ChatCompletionChunk> preChunk = new AtomicReference<>(new ChatCompletionChunk(null, null, null, null, null, null, null, null));
 
-        TransmittableEagleEyeTool transmittableEagleEyeTool = new TransmittableEagleEyeTool();
-        // @formatter:off
-		return this.webClient.post()
-			.uri(this.completionsPath)
-			.headers(headers -> {
-				headers.addAll(additionalHttpHeader);
-				addDefaultHeadersIfMissing(headers);
-			}) // @formatter:on
-                .bodyValue(chatRequest)
-                .retrieve()
-                .bodyToFlux(String.class)
-                // cancels the flux stream after the "[DONE]" is received.
-                .takeUntil(SSE_DONE_PREDICATE)
-                // filters out the "[DONE]" message.
-                .filter(SSE_DONE_PREDICATE.negate())
-                .map(content -> ModelOptionsUtils.jsonToObject(content, ChatCompletionChunk.class))
+            TransmittableEagleEyeTool transmittableEagleEyeTool = new TransmittableEagleEyeTool();
+            // @formatter:off
+            return this.webClient.post()
+                .uri(this.completionsPath)
+                .headers(headers -> {
+                    headers.addAll(additionalHttpHeader);
+                    addDefaultHeadersIfMissing(headers);
+                }) // @formatter:on
+                    .bodyValue(chatRequest)
+                    .retrieve()
+                    .bodyToFlux(String.class)
+                    // cancels the flux stream after the "[DONE]" is received.
+                    .takeUntil(SSE_DONE_PREDICATE)
+                    // filters out the "[DONE]" message.
+                    .filter(SSE_DONE_PREDICATE.negate())
+                    .map(content -> ModelOptionsUtils.jsonToObject(content, ChatCompletionChunk.class))
 //			// Detect is the chunk is part of a streaming function call.
 //			.map(chunk -> {
 //				if (this.chunkMerger.isStreamingToolFunctionCall(chunk)) {
@@ -316,15 +323,15 @@ public class OpenAiApi {
 //			})
 //			// Flux<Mono<ChatCompletionChunk>> -> Flux<ChatCompletionChunk>
 //			.flatMap(mono -> mono);
-                .index()
-                .filter(tuple -> !ObjectUtils.isEmpty(tuple.getT2().choices))
-                .doOnNext(tuple -> {
+//                .index()
+                .filter(chunk -> chunk.choices != null || chunk.usage != null)
+                .doOnNext(chunk -> {
                     // 传递父线程的全链路业务日志的上下文
                     transmittableEagleEyeTool.restoreContext();
                 })
-                .concatMap((tuple) -> {
+                .concatMap((chunk) -> {
                     // 当前chunk
-                    ChatCompletionChunk chunk = tuple.getT2();
+                    log.info("received chunk：{}", chunk);
 
                     // 开始工具调用
                     if (chunkMerger.isStreamingToolFunctionCall(chunk)) {
@@ -336,8 +343,6 @@ public class OpenAiApi {
                     }
 
                     if (isInsideTool.get()) {
-                        log.info("工具 chunk：{}", chunk);
-
                         // 在工具调用内部，合并 chunk
                         preChunk.set(chunkMerger.merge(preChunk.get(), chunk));
 
@@ -346,8 +351,9 @@ public class OpenAiApi {
                             isInsideTool.set(false);
 
                             if (preChunk.get().choices() != null && !preChunk.get().choices().isEmpty()) {
-                                var choice = preChunk.get().choices().get(0);
+                                log.info("AllTheToolCalls={}", JSON.toJSONString(preChunk.get().choices.get(0).delta.toolCalls()));
 
+                                var choice = preChunk.get().choices().get(0);
                                 if (choice.finishReason() == ChatCompletionFinishReason.LENGTH
                                         && choice.delta() != null
                                         && !CollectionUtils.isEmpty(choice.delta().toolCalls())) {
@@ -356,7 +362,7 @@ public class OpenAiApi {
                                     ChatCompletionChunk cleanedChunk = this.chunkMerger.removeInvalidLastToolCall(preChunk.get());
 
                                     if (cleanedChunk == null) {
-                                        return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
+                                        return chunk.choices.get(0).delta == null ? Mono.<ChatCompletionChunk>empty() : Mono.just(chunk);
                                     }
 
                                     return chunk.choices.get(0).delta == null ? Flux.just(cleanedChunk) : Flux.just(chunk, cleanedChunk);
@@ -364,16 +370,19 @@ public class OpenAiApi {
                                     return chunk.choices.get(0).delta == null ? Flux.just(preChunk.get()) : Flux.just(chunk, preChunk.get());
                                 }
                             } else {
-                                return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
+                                return chunk.choices.get(0).delta == null ? Mono.<ChatCompletionChunk>empty() : Mono.just(chunk);
                             }
                         } else {
-                            return chunk.choices.get(0).delta == null ? Mono.empty() : Mono.just(chunk);
+                            return chunk.choices.get(0).delta == null ? Mono.<ChatCompletionChunk>empty() : Mono.just(chunk);
                         }
                     } else {
                         // 不在工具内部，直接返回 chunk
                         return Mono.just(chunk);
                     }
                 });
+        }).retryWhen(Retry.fixedDelay(30, Duration.ofSeconds(1)) // 最多重试30次，每次间隔1秒
+                .filter(throwable -> throwable instanceof WebClientResponseException.TooManyRequests || throwable instanceof WebClientResponseException.InternalServerError)
+                .doBeforeRetry(signal -> log.warn("Stream rate limited (429 Too Many Requests), retrying attempt: {}", signal.totalRetries() + 1)));
     }
 
     /**
@@ -1235,7 +1244,9 @@ public class OpenAiApi {
 			@JsonProperty("verbosity") String verbosity,
 			@JsonProperty("prompt_cache_key") String promptCacheKey,
 			@JsonProperty("safety_identifier") String safetyIdentifier,
-			@JsonProperty("extra_body") Map<String, Object> extraBody) {
+            @JsonProperty("extendParams") Map<String, Object> extendParams,
+            @JsonProperty("enable_thinking") Boolean enableThinking,
+			Map<String, Object> extraBody) {
 
 		/**
 		 * Compact constructor that ensures extraBody is initialized as a mutable HashMap
@@ -1257,7 +1268,7 @@ public class OpenAiApi {
 		public ChatCompletionRequest(List<ChatCompletionMessage> messages, String model, Double temperature) {
 			this(messages, model, null, null, null, null, null, null, null, null, null, null, null, null, null,
 					null, null, null, false, null, temperature, null,
-					null, null, null, null, null, null, null, null, null, null);
+					null, null, null, null, null, null, null, null, null, null, null, null);
 		}
 
 		/**
@@ -1271,7 +1282,7 @@ public class OpenAiApi {
 			this(messages, model, null, null, null, null, null, null,
 					null, null, null, List.of(OutputModality.AUDIO, OutputModality.TEXT), audio, null, null,
 					null, null, null, stream, null, null, null,
-					null, null, null, null, null, null, null, null, null, null);
+					null, null, null, null, null, null, null, null, null, null, null, null);
 		}
 
 		/**
@@ -1286,10 +1297,16 @@ public class OpenAiApi {
 		public ChatCompletionRequest(List<ChatCompletionMessage> messages, String model, Double temperature, boolean stream) {
 			this(messages, model, null, null, null, null, null, null, null, null, null,
 					null, null, null, null, null, null, null, stream, null, temperature, null,
-					null, null, null, null, null, null, null, null, null, null);
+					null, null, null, null, null, null, null, null, null, null, null, null);
 		}
 
-		/**
+        public ChatCompletionRequest(List<ChatCompletionMessage> messages, boolean stream, StreamOptions streamOptions) {
+            this(messages, null, null, null, null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, stream, streamOptions, null, null,
+                    null, null, null, null, null, null, null, null, null, null,null,null);
+        }
+
+        /**
 		 * Shortcut constructor for a chat completion request with the given messages, model, tools and tool choice.
 		 * Streaming is set to false, temperature to 0.8 and all other parameters are null.
 		 *
@@ -1302,7 +1319,7 @@ public class OpenAiApi {
 				List<FunctionTool> tools, Object toolChoice) {
 			this(messages, model, null, null, null, null, null, null, null, null, null,
 					null, null, null, null, null, null, null, false, null, 0.8, null,
-					tools, toolChoice, null, null, null, null, null, null, null, null);
+					tools, toolChoice, null, null, null, null, null, null, null, null,null,null);
 		}
 
 		/**
@@ -1315,8 +1332,21 @@ public class OpenAiApi {
 		public ChatCompletionRequest(List<ChatCompletionMessage> messages, Boolean stream) {
 			this(messages, null, null, null, null, null, null, null, null, null, null, null, null, null,
 				null, null, null, null, stream, null, null, null, null, null, null, null, null, null,
-				null, null, null, null);
+				null, null, null, null,null,null);
 		}
+
+        /**
+         * Shortcut constructor for a chat completion request with the given messages for streaming.
+         *
+         * @param messages A list of messages comprising the conversation so far.
+         * @param stream If set, partial message deltas will be sent.Tokens will be sent as data-only server-sent events
+         * as they become available, with the stream terminated by a data: [DONE] message.
+         */
+        public ChatCompletionRequest(List<ChatCompletionMessage> messages, Boolean stream, Map<String, Object> extendParams) {
+            this(messages, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                    null, null, null, null, stream, null, null, null, null, null, null, null, null, null,
+                    null, null, null, extendParams, null, null);
+        }
 
 		/**
 		 * Sets the {@link StreamOptions} for this request.
@@ -1329,7 +1359,7 @@ public class OpenAiApi {
 					this.topLogprobs, this.maxTokens, this.maxCompletionTokens, this.n, this.outputModalities, this.audioParameters, this.presencePenalty,
 					this.responseFormat, this.seed, this.serviceTier, this.stop, this.stream, streamOptions, this.temperature, this.topP,
 					this.tools, this.toolChoice, this.parallelToolCalls, this.user, this.reasoningEffort, this.webSearchOptions, this.verbosity,
-					this.promptCacheKey, this.safetyIdentifier, this.extraBody);
+					this.promptCacheKey, this.safetyIdentifier, this.extendParams, this.enableThinking, this.extraBody);
 		}
 
 		/**
@@ -1627,11 +1657,13 @@ public class OpenAiApi {
          * either "text", "image_url", or "input_audio" type. Only one option allowed.
          *
          * @param type       Content type, each can be of type text or image_url.
-         * @param text       The text content of the message.
-         * @param imageUrl   The image content of the message. You can pass multiple images
-         *                   by adding multiple image_url content parts. Image input is only supported when
-         *                   using the gpt-4-visual-preview model.
-         * @param inputAudio Audio content part.
+         * @param text         The text content of the message.
+         * @param imageUrl     The image content of the message. You can pass multiple images
+         *                     by adding multiple image_url content parts. Image input is only supported when
+         *                     using the gpt-4-visual-preview model.
+         * @param inputAudio   Audio content part.
+         * @param cacheControl The cache control settings. Use {@code CacheControl.ephemeral()} to enable
+         *                     prompt caching with ephemeral type.
          */
         @JsonInclude(Include.NON_NULL)
         @JsonIgnoreProperties(ignoreUnknown = true)
@@ -1640,7 +1672,8 @@ public class OpenAiApi {
 			@JsonProperty("text") String text,
 			@JsonProperty("image_url") ImageUrl imageUrl,
 			@JsonProperty("input_audio") InputAudio inputAudio,
-			@JsonProperty("file") InputFile inputFile) { // @formatter:on
+			@JsonProperty("file") InputFile inputFile,
+			@JsonProperty("cache_control") CacheControl cacheControl) { // @formatter:on
 
             /**
              * Shortcut constructor for a text content.
@@ -1648,7 +1681,16 @@ public class OpenAiApi {
              * @param text The text content of the message.
              */
             public MediaContent(String text) {
-                this("text", text, null, null, null);
+                this("text", text, null, null, null, null);
+            }
+
+            /**
+             * Shortcut constructor for a text content.
+             *
+             * @param text The text content of the message.
+             */
+            public MediaContent(String text, CacheControl cacheControl) {
+                this("text", text, null, null, null, cacheControl);
             }
 
             /**
@@ -1657,7 +1699,16 @@ public class OpenAiApi {
              * @param imageUrl The image content of the message.
              */
             public MediaContent(ImageUrl imageUrl) {
-                this("image_url", null, imageUrl, null, null);
+                this("image_url", null, imageUrl, null, null, null);
+            }
+
+            /**
+             * Shortcut constructor for an image content.
+             *
+             * @param imageUrl The image content of the message.
+             */
+            public MediaContent(ImageUrl imageUrl, CacheControl cacheControl) {
+                this("image_url", null, imageUrl, null, null, cacheControl);
             }
 
             /**
@@ -1666,7 +1717,16 @@ public class OpenAiApi {
              * @param inputAudio The audio content of the message.
              */
             public MediaContent(InputAudio inputAudio) {
-                this("input_audio", null, null, inputAudio, null);
+                this("input_audio", null, null, inputAudio, null, null);
+            }
+
+            /**
+             * Shortcut constructor for an audio content.
+             *
+             * @param inputAudio The audio content of the message.
+             */
+            public MediaContent(InputAudio inputAudio, CacheControl cacheControl) {
+                this("input_audio", null, null, inputAudio, null, cacheControl);
             }
 
             /**
@@ -1675,7 +1735,40 @@ public class OpenAiApi {
              * @param inputFile The file content of the message.
              */
             public MediaContent(InputFile inputFile) {
-                this("file", null, null, null, inputFile);
+                this("file", null, null, null, inputFile, null);
+            }
+
+            /**
+             * Shortcut constructor for a file content
+             *
+             * @param inputFile The file content of the message.
+             */
+            public MediaContent(InputFile inputFile, CacheControl cacheControl) {
+                this("file", null, null, null, inputFile, cacheControl);
+            }
+
+            /**
+             * Backward-compatible constructor without cacheControl.
+             */
+            public MediaContent(String type, String text, ImageUrl imageUrl, InputAudio inputAudio, InputFile inputFile) {
+                this(type, text, imageUrl, inputAudio, inputFile, null);
+            }
+
+            /**
+             * Cache control settings for prompt caching.
+             *
+             * @param type The cache control type (e.g., "ephemeral").
+             */
+            @JsonInclude(Include.NON_NULL)
+            public record CacheControl(@JsonProperty("type") String type) {
+
+                /**
+                 * Creates an ephemeral cache control instance.
+                 * @return a CacheControl with type "ephemeral"
+                 */
+                public static CacheControl ephemeral() {
+                    return new CacheControl("ephemeral");
+                }
             }
 
             /**
@@ -1946,14 +2039,40 @@ public class OpenAiApi {
         /**
          * Breakdown of tokens used in the prompt
          *
-         * @param audioTokens  Audio input tokens present in the prompt.
-         * @param cachedTokens Cached tokens present in the prompt.
+         * @param audioTokens              Audio input tokens present in the prompt.
+         * @param cachedTokens             Cached tokens present in the prompt.
+         * @param textTokens               Text tokens present in the prompt.
+         * @param cacheCreation            Cache creation details with per-type token breakdown.
+         * @param cacheCreationInputTokens Total tokens used for cache creation input.
+         * @param cacheType                The type of cache used (e.g., "ephemeral").
          */
         @JsonInclude(Include.NON_NULL)
         @JsonIgnoreProperties(ignoreUnknown = true)
         public record PromptTokensDetails(// @formatter:off
 			@JsonProperty("audio_tokens") Integer audioTokens,
-			@JsonProperty("cached_tokens") Integer cachedTokens) { // @formatter:on
+			@JsonProperty("cached_tokens") Integer cachedTokens,
+			@JsonProperty("text_tokens") Integer textTokens,
+			@JsonProperty("cache_creation") CacheCreation cacheCreation,
+			@JsonProperty("cache_creation_input_tokens") Integer cacheCreationInputTokens,
+			@JsonProperty("cache_type") String cacheType) { // @formatter:on
+
+            /**
+             * Backward-compatible constructor.
+             */
+            public PromptTokensDetails(Integer audioTokens, Integer cachedTokens) {
+                this(audioTokens, cachedTokens, null, null, null, null);
+            }
+
+            /**
+             * Cache creation details with per-type token breakdown.
+             *
+             * @param ephemeral5mInputTokens Ephemeral 5-minute input tokens used for cache creation.
+             */
+            @JsonInclude(Include.NON_NULL)
+            @JsonIgnoreProperties(ignoreUnknown = true)
+            public record CacheCreation(
+                @JsonProperty("ephemeral_5m_input_tokens") Integer ephemeral5mInputTokens) {
+            }
         }
 
         /**
@@ -1965,6 +2084,7 @@ public class OpenAiApi {
          * @param audioTokens              Number of tokens generated by the model for audio.
          * @param rejectedPredictionTokens Number of tokens generated by the model for
          *                                 rejected predictions.
+         * @param textTokens               Number of text tokens generated in the completion.
          */
         @JsonInclude(Include.NON_NULL)
         @JsonIgnoreProperties(ignoreUnknown = true)
@@ -1972,7 +2092,16 @@ public class OpenAiApi {
 			@JsonProperty("reasoning_tokens") Integer reasoningTokens,
 			@JsonProperty("accepted_prediction_tokens") Integer acceptedPredictionTokens,
 			@JsonProperty("audio_tokens") Integer audioTokens,
-			@JsonProperty("rejected_prediction_tokens") Integer rejectedPredictionTokens) { // @formatter:on
+			@JsonProperty("rejected_prediction_tokens") Integer rejectedPredictionTokens,
+			@JsonProperty("text_tokens") Integer textTokens) { // @formatter:on
+
+            /**
+             * Backward-compatible constructor.
+             */
+            public CompletionTokenDetails(Integer reasoningTokens, Integer acceptedPredictionTokens,
+                    Integer audioTokens, Integer rejectedPredictionTokens) {
+                this(reasoningTokens, acceptedPredictionTokens, audioTokens, rejectedPredictionTokens, null);
+            }
         }
     }
 

@@ -252,7 +252,7 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 	 * <a href="https://platform.openai.com/docs/guides/safety-best-practices#safety-identifiers">Learn more</a>.
 	 */
 	private @JsonProperty("safety_identifier") String safetyIdentifier;
-
+	private @JsonProperty("enable_thinking") Boolean enableThinking;
 	/**
 	 * Collection of {@link ToolCallback}s to be used for tool calling in the chat completion requests.
 	 */
@@ -341,6 +341,7 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 			.promptCacheKey(fromOptions.getPromptCacheKey())
 			.safetyIdentifier(fromOptions.getSafetyIdentifier())
 			.extraBody(fromOptions.getExtraBody())
+			.enableThinking(fromOptions.getEnableThinking())
 			.build();
 	}
 
@@ -677,6 +678,14 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 		this.safetyIdentifier = safetyIdentifier;
 	}
 
+	public Boolean getEnableThinking() {
+		return this.enableThinking;
+	}
+
+	public void setEnableThinking(Boolean enableThinking) {
+		this.enableThinking = enableThinking;
+	}
+
 	@Override
 	@JsonIgnore
 	public String getOutputSchema() {
@@ -702,7 +711,7 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 				this.user, this.parallelToolCalls, this.toolCallbacks, this.toolNames, this.httpHeaders,
 				this.internalToolExecutionEnabled, this.toolContext, this.outputModalities, this.outputAudio,
 				this.store, this.metadata, this.reasoningEffort, this.webSearchOptions, this.verbosity,
-				this.serviceTier, this.promptCacheKey, this.safetyIdentifier, this.extraBody);
+				this.serviceTier, this.promptCacheKey, this.safetyIdentifier, this.enableThinking, this.extraBody);
 	}
 
 	@Override
@@ -740,6 +749,7 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 				&& Objects.equals(this.serviceTier, other.serviceTier)
 				&& Objects.equals(this.promptCacheKey, other.promptCacheKey)
 				&& Objects.equals(this.safetyIdentifier, other.safetyIdentifier)
+				&& Objects.equals(this.enableThinking, other.enableThinking)
 				&& Objects.equals(this.extraBody, other.extraBody);
 	}
 
@@ -862,6 +872,11 @@ public class OpenAiChatOptions implements ToolCallingChatOptions, StructuredOutp
 
 		public Builder N(Integer n) {
 			this.options.n = n;
+			return this;
+		}
+
+		public Builder enableThinking(Boolean enableThinking) {
+			this.options.enableThinking = enableThinking;
 			return this;
 		}
 

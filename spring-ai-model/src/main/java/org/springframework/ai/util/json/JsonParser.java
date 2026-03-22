@@ -70,7 +70,7 @@ public final class JsonParser {
 		}
 		catch (JsonProcessingException ex) {
 			log.error("ErrorJsonString = {}", json);
-			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getName()), ex);
+			throw new IllegalStateException("工具调用参数JSON反序列化异常，请重新生成工具调用的参数。typeName=%s, exceptionMessage=%s".formatted(type.getName(), ex.getMessage()));
 		}
 	}
 
@@ -86,7 +86,8 @@ public final class JsonParser {
 		}
 		catch (JsonProcessingException ex) {
 			log.error("ErrorJsonString = {}", json);
-			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getTypeName()), ex);
+//			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getTypeName()), ex);
+			throw new IllegalStateException("工具调用参数JSON反序列化异常，请重新生成工具调用的参数。typeName=%s, exceptionMessage=%s".formatted(type.getTypeName(), ex.getMessage()));
 		}
 	}
 
@@ -102,8 +103,9 @@ public final class JsonParser {
 		}
 		catch (JsonProcessingException ex) {
 			log.error("ErrorJsonString = {}", json);
-			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getType().getTypeName()),
-					ex);
+//			throw new IllegalStateException("Conversion from JSON to %s failed".formatted(type.getType().getTypeName()),
+//					ex);
+			throw new IllegalStateException("工具调用参数JSON反序列化异常，请重新生成工具调用的参数。typeName=%s, exceptionMessage=%s".formatted(type.getType().getTypeName(), ex.getMessage()));
 		}
 	}
 
